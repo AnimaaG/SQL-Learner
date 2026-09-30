@@ -119,7 +119,6 @@ html,body{
 </head>
 <body>
 <div class="app">
-<div class="mobile-rotate-note">↔ <b>Landscape workspace</b> — SQLQuest will request landscape/full-screen mode when the device allows it.</div>
 <header class="topbar">
   <div class="logo">SQL</div>
   <div class="brand">SQLQuest <small>SQL Developer Learning Studio</small></div>
@@ -2361,68 +2360,69 @@ function resetProgress(){clearAllLocalData();}
 
 
 /* =========================================================
-   MOBILE / TABLET VIEWPORT ENGINE
-   Best-effort real orientation lock + visual landscape fallback.
+   MOBILE / TABLET — DISPLAY-SIZED, NO OUTER SCROLLING
+   The IDE scales to the actual viewport. It does NOT rotate the
+   DOM in portrait mode (that caused the sideways/partial screen
+   shown on phones). Fullscreen/landscape is requested only when
+   the browser permits it; PWA-installed launches use the manifest.
    ========================================================= */
 (function initMobileViewport(){
-  const isSmallDevice=()=>window.matchMedia('(max-width:1100px)').matches;
-  const isPortrait=()=>window.matchMedia('(orientation:portrait)').matches;
   const app=document.querySelector('.app');
-  const CANVAS_W=1280,CANVAS_H=720;
+  const small=()=>window.matchMedia('(max-width:1100px)').matches;
+  const BASE_W=1280,BASE_H=720;
 
-  function fitCanvas(){
-    if(!app||!isSmallDevice())return;
-    const vw=Math.max(1,window.innerWidth),vh=Math.max(1,window.innerHeight);
-    if(isPortrait()&&vw<vh){
-      const scale=Math.min(vh/CANVAS_W,vw/CANVAS_H);
-      const rotatedW=CANVAS_H*scale,rotatedH=CANVAS_W*scale;
-      app.style.transformOrigin='top left';
-      app.style.transform=`translateY(${vh}px) rotate(-90deg) scale(${scale})`;
-      app.style.left=`${Math.max(0,(vw-rotatedW)/2)}px`;
-      app.style.top=`${Math.max(0,(vh-rotatedH)/2)}px`;
-    }else{
-      const scale=Math.min(vw/CANVAS_W,vh/CANVAS_H);
-      app.style.transformOrigin='top left';
-      app.style.transform=`scale(${Math.max(.1,scale)})`;
-      app.style.left='0px';app.style.top='0px';
-    }
+  function fit(){
+    if(!app||!small()) return;
+    const vv=window.visualViewport;
+    const vw=Math.max(1, vv ? vv.width : window.innerWidth);
+    const vh=Math.max(1, vv ? vv.height : window.innerHeight);
+    const scale=Math.min(vw/BASE_W,vh/BASE_H);
+    const scaledW=BASE_W*scale, scaledH=BASE_H*scale;
+    app.style.transformOrigin='top left';
+    app.style.transform=`scale(${Math.max(.1,scale)})`;
+    app.style.left=`${Math.max(0,(vw-scaledW)/2)}px`;
+    app.style.top=`${Math.max(0,(vh-scaledH)/2)}px`;
   }
 
-  async function requestLandscape(){
-    if(!isSmallDevice())return;
+  async function enterImmersive(){
+    if(!small()) return;
     try{
-      if(!document.fullscreenElement&&document.documentElement.requestFullscreen)
+      if(!document.fullscreenElement && document.documentElement.requestFullscreen){
         await document.documentElement.requestFullscreen({navigationUI:'hide'});
+      }
     }catch(e){}
     try{
-      if(screen.orientation&&screen.orientation.lock)
+      if(screen.orientation && screen.orientation.lock){
         await screen.orientation.lock('landscape');
+      }
     }catch(e){}
-    fitCanvas();
+    fit();
   }
 
-  const update=()=>requestAnimationFrame(fitCanvas);
-  fitCanvas();
-  window.addEventListener('resize',update,{passive:true});
-  window.addEventListener('orientationchange',()=>setTimeout(fitCanvas,100),{passive:true});
-  if(window.visualViewport)window.visualViewport.addEventListener('resize',update,{passive:true});
-  document.addEventListener('fullscreenchange',update);
+  fit();
+  window.addEventListener('resize',()=>requestAnimationFrame(fit),{passive:true});
+  window.addEventListener('orientationchange',()=>setTimeout(fit,120),{passive:true});
+  document.addEventListener('fullscreenchange',()=>requestAnimationFrame(fit));
+  if(window.visualViewport) window.visualViewport.addEventListener('resize',()=>requestAnimationFrame(fit),{passive:true});
 
-  requestLandscape();
-  let retried=false;
-  const once=()=>{
-    if(retried)return;
-    retried=true;requestLandscape();
-    window.removeEventListener('pointerdown',once);
-    window.removeEventListener('touchstart',once);
-    window.removeEventListener('keydown',once);
+  // Mobile browsers require a user gesture for fullscreen/orientation lock.
+  // Do not display a notification or rotate the page with CSS.
+  let done=false;
+  const gesture=()=>{
+    if(done) return;
+    done=true;
+    enterImmersive();
+    window.removeEventListener('pointerup',gesture);
+    window.removeEventListener('touchend',gesture);
+    window.removeEventListener('click',gesture);
   };
-  window.addEventListener('pointerdown',once,{passive:true});
-  window.addEventListener('touchstart',once,{passive:true});
-  window.addEventListener('keydown',once,{passive:true});
+  window.addEventListener('pointerup',gesture,{passive:true});
+  window.addEventListener('touchend',gesture,{passive:true});
+  window.addEventListener('click',gesture,{passive:true});
+  enterImmersive();
 })();
 
-/* Register PWA shell so installed SQLQuest launches in landscape/fullscreen. */
+/* PWA shell: installed SQLQuest opens as a fullscreen landscape app. */
 if('serviceWorker' in navigator){
   window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
 }
