@@ -2,7 +2,12 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover,user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="screen-orientation" content="landscape">
+<meta name="orientation" content="landscape">
 <title>SQLQuest — SQL Developer Learning Studio</title>
 <style>
 :root{
@@ -66,142 +71,111 @@ table{border-collapse:collapse;width:100%;font:11px Consolas,monospace}th{positi
 @media(max-width:900px){.sidebar{width:205px}.schema-panel{display:none}.exam-levels{grid-template-columns:1fr 1fr}.info-grid{grid-template-columns:1fr}}
 
 /* =========================================================
-   MOBILE / LANDSCAPE UI
-   SQLQuest intentionally keeps the SQL Developer-style desktop
-   canvas on phones. In portrait, the canvas is horizontally
-   scrollable so the editor, sidebar and result grid remain usable.
-   Rotate the phone to landscape for the best experience.
+   MOBILE / TABLET — FULL-SCREEN SQL DEVELOPER CANVAS
+   The application keeps one fixed desktop-style canvas and
+   scales it to the device viewport. This prevents page-level
+   horizontal/vertical scrolling and keeps the complete IDE
+   visible. Landscape is requested automatically when the
+   browser permits orientation locking.
    ========================================================= */
-@media (max-width: 900px){
-  html,body{
-    min-width:0;
-    width:100%;
-    overflow-x:auto;
-    overflow-y:hidden;
-    -webkit-text-size-adjust:100%;
-  }
+
+html,body{
+  width:100%;
+  height:100%;
+  margin:0;
+  overflow:hidden !important;
+  overscroll-behavior:none;
+  -webkit-text-size-adjust:100%;
+}
+
+@media (max-width:1100px){
   .app{
-    min-width:1080px;
-    width:1080px;
-    height:100vh;
+    --canvas-w:1280px;
+    --canvas-h:720px;
+    width:var(--canvas-w);
+    min-width:var(--canvas-w);
+    height:var(--canvas-h);
+    min-height:var(--canvas-h);
+    transform-origin:top left;
+    will-change:transform;
   }
+
+  /* Keep the complete SQL Developer layout visible on smaller screens. */
+  .workspace{width:1280px;min-width:1280px}
+  .sidebar{width:260px;min-width:260px}
+  .main{min-width:0;width:auto}
+  .schema-panel{width:300px;min-width:300px;display:flex}
+
   .topbar{
-    height:48px;
-    padding:0 9px;
+    height:52px;
+    padding:0 10px;
     gap:8px;
+  }
+  .logo{width:30px;height:30px}
+  .brand{white-space:nowrap}
+  .menu{margin-left:4px}
+  .menu button,.topbtn{padding:7px 8px;white-space:nowrap}
+  .conn{white-space:nowrap}
+
+  .editorbar{height:38px}
+  .context{padding:9px 12px}
+  .editor{min-height:180px}
+  .bottom{height:285px}
+  .topic-scroll{padding:16px 18px}
+  .exam-page{padding:16px}
+  .modal{width:900px;max-width:none}
+
+  /* Keep all three main IDE regions present, like desktop. */
+  .info-grid{grid-template-columns:1fr 1fr}
+  .exam-levels{grid-template-columns:repeat(4,1fr)}
+  .keyword-grid{grid-template-columns:repeat(3,1fr)}
+}
+
+/* Tablet/phone viewport becomes a scaled presentation surface. */
+@media (max-width:1100px){
+  body{
+    display:block;
     position:relative;
   }
-  .logo{width:28px;height:28px;font-size:10px}
-  .brand{font-size:13px;white-space:nowrap}
-  .brand small{font-size:9px}
-  .menu{margin-left:4px;gap:0}
-  .menu button,.topbtn{padding:6px 8px;font-size:11px}
-  .conn{font-size:10px;white-space:nowrap}
-  .topbtn.danger{white-space:nowrap}
 
-  .workspace{min-width:1080px;width:1080px}
-  .sidebar{width:215px;min-width:215px}
-  .sidebar-content{min-width:0}
-  .main{min-width:865px;width:865px}
-
-  .editorbar{height:36px;padding:0 7px}
-  .editor-actions{gap:2px}
-  .editor-actions button,.runbtn{padding:5px 8px;font-size:10px;white-space:nowrap}
-  .context{padding:8px 11px}
-  .context h1{font-size:14px}
-  .context p{font-size:11px}
-
-  .split{min-width:0}
-  .editor{min-height:170px}
-  textarea#sql{font-size:12px;line-height:1.6;padding:11px 12px}
-  .lineNums{width:40px;font-size:12px;padding-right:7px}
-  .bottom{height:255px;min-height:220px}
-  .bottomtabs{overflow-x:auto;white-space:nowrap}
-  .btab{padding:0 10px;font-size:10px;white-space:nowrap}
-  .results{padding:8px}
-  table{font-size:10px}
-  th,td{padding:6px 8px}
-
-  .schema-panel{display:none}
-  .topic-scroll{padding:14px 16px}
-  .topic-section{max-width:850px}
-  .topic-title{font-size:20px}
-  .topic-desc{font-size:12px}
-  .info-grid{grid-template-columns:1fr 1fr}
-  .keyword-grid{grid-template-columns:repeat(2,1fr)}
-  .exam-page{padding:14px}
-  .exam-levels{grid-template-columns:repeat(2,1fr)}
-  .sets{grid-template-columns:repeat(5,1fr)}
-}
-
-/* Phone portrait: preserve the wide SQL IDE canvas and make the
-   page itself horizontally scrollable instead of crushing controls. */
-@media (max-width: 600px) and (orientation: portrait){
-  html,body{
-    overflow-x:auto;
-    overflow-y:hidden;
-  }
-  .app,.workspace{
-    min-width:1080px;
-    width:1080px;
-  }
-  .mobile-rotate-note{
-    display:flex;
-  }
-  .sidebar{width:215px;min-width:215px}
-  .main{width:865px;min-width:865px}
-  .editor-actions button:nth-child(n+8){display:none}
-  .teacher{gap:14px}
-  .teacher img{width:110px;height:110px}
-  .modal{width:820px;max-width:none}
-  .overlay{
-    display:block;
-    overflow:auto;
-    -webkit-overflow-scrolling:touch;
-    padding:14px;
+  .app{
+    position:absolute;
+    left:0;
+    top:0;
   }
 }
 
-/* Phone landscape: use the full available horizontal viewport while
-   retaining the same familiar SQL Developer proportions. */
-@media (max-width: 900px) and (orientation: landscape){
-  .app,.workspace{
-    min-width:100%;
-    width:100%;
-  }
-  .sidebar{width:205px;min-width:205px}
-  .main{width:auto;min-width:0}
-  .schema-panel{display:none}
-  .bottom{height:235px}
-  .editor{min-height:150px}
-  .context{padding:7px 10px}
-  .context p{font-size:10px}
-  .topic-scroll{padding:12px 15px}
-  .exam-page{padding:12px}
-}
-
-/* Prevent touch devices from turning the code editor into an accidental
-   page gesture. The editor itself remains vertically scrollable. */
-@media (pointer: coarse){
+/* Touch devices: preserve touch usability without changing the canvas size. */
+@media (pointer:coarse) and (max-width:1100px){
   button,.navitem,.tree-item,.topic-group-head,.topic-child,.ws-tab,.ws-new,.btab{
     min-height:32px;
   }
+
   textarea#sql,.all-editor textarea,.exam-input{
+    -webkit-overflow-scrolling:touch;
+  }
+
+  .tablewrap,.results,.sidebar-content,.schema-body,.topic-scroll,.exam-page{
     -webkit-overflow-scrolling:touch;
   }
 }
 
-/* Optional rotate hint. It is injected without changing the application
-   structure and disappears automatically in landscape. */
+/* Portrait fallback: no page scrolling. The script will request
+   landscape orientation where the browser/OS allows it. */
+@media (max-width:600px) and (orientation:portrait){
+  .mobile-rotate-note{display:flex}
+}
+
 .mobile-rotate-note{
   display:none;
   position:fixed;
-  left:12px;
-  bottom:12px;
-  z-index:45;
+  left:50%;
+  bottom:14px;
+  transform:translateX(-50%);
+  z-index:9999;
   align-items:center;
   gap:8px;
-  padding:8px 11px;
+  padding:9px 12px;
   border:1px solid #315a87;
   border-radius:6px;
   background:#101b28;
@@ -209,17 +183,17 @@ table{border-collapse:collapse;width:100%;font:11px Consolas,monospace}th{positi
   font-size:10px;
   box-shadow:0 8px 25px rgba(0,0,0,.4);
   pointer-events:none;
+  white-space:nowrap;
 }
 .mobile-rotate-note b{color:#79c0ff}
-@media (max-width:900px) and (orientation:landscape){
-  .mobile-rotate-note{display:none}
+@media (orientation:landscape){
+  .mobile-rotate-note{display:none !important}
 }
-
 </style>
 </head>
 <body>
 <div class="app">
-<div class="mobile-rotate-note">↔ <b>Landscape mode recommended</b> — rotate your phone for the full SQL Developer workspace.</div>
+<div class="mobile-rotate-note">↔ <b>Landscape workspace</b> — SQLQuest will request landscape/full-screen mode when the device allows it.</div>
 <header class="topbar">
   <div class="logo">SQL</div>
   <div class="brand">SQLQuest <small>SQL Developer Learning Studio</small></div>
@@ -2458,6 +2432,92 @@ function showShortcuts(){alert('SQLQuest shortcuts\n\nCtrl/Cmd + Enter — Run S
 function showAbout(){alert('SQLQuest — SQL Developer Learning Studio\n\nOracle-style SQL learning simulator with persistent browser-local database, worksheet history, topics, exams and developer-tool workflow.');}
 function clearAllLocalData(){if(!confirm('Clear ALL SQLQuest data stored for this browser? This removes tables, rows, views, indexes, sequences, procedures, functions, triggers, worksheets, SQL history, progress and settings. This cannot be undone.'))return;try{localStorage.clear();sessionStorage.clear();}catch(e){}location.reload();}
 function resetProgress(){clearAllLocalData();}
+
+
+/* =========================================================
+   MOBILE / TABLET VIEWPORT ENGINE
+   Keep the complete desktop-style IDE visible without page
+   scrolling. On supported browsers, request fullscreen +
+   landscape after a user gesture. Orientation locking cannot
+   be forced by ordinary web pages on every mobile browser,
+   so the fallback is a fitted, non-scrolling canvas.
+   ========================================================= */
+(function initMobileViewport(){
+  const isSmallDevice=()=>window.matchMedia('(max-width:1100px)').matches;
+  const app=document.querySelector('.app');
+  const CANVAS_W=1280;
+  const CANVAS_H=720;
+
+  function fitCanvas(){
+    if(!app) return;
+    if(!isSmallDevice()){
+      app.style.transform='';
+      app.style.left='';
+      app.style.top='';
+      return;
+    }
+
+    const vw=Math.max(1,window.innerWidth);
+    const vh=Math.max(1,window.innerHeight);
+
+    /*
+      Landscape: scale the 1280x720 IDE to the entire viewport.
+      Portrait: use the same fit-to-screen fallback so there is
+      never an outer scrollbar. If orientation locking succeeds,
+      the browser will switch to landscape and this recalculates.
+    */
+    const scale=Math.min(vw/CANVAS_W,vh/CANVAS_H);
+    app.style.transform=`scale(${Math.max(.1,scale)})`;
+    app.style.left='0px';
+    app.style.top='0px';
+  }
+
+  async function requestLandscape(){
+    if(!isSmallDevice()) return;
+    try{
+      if(document.documentElement.requestFullscreen && !document.fullscreenElement){
+        await document.documentElement.requestFullscreen({navigationUI:'hide'});
+      }
+    }catch(e){}
+
+    try{
+      if(screen.orientation && screen.orientation.lock){
+        await screen.orientation.lock('landscape');
+      }
+    }catch(e){}
+
+    fitCanvas();
+  }
+
+  function update(){
+    requestAnimationFrame(fitCanvas);
+  }
+
+  fitCanvas();
+  window.addEventListener('resize',update,{passive:true});
+  window.addEventListener('orientationchange',()=>setTimeout(fitCanvas,100),{passive:true});
+  if(window.visualViewport){
+    window.visualViewport.addEventListener('resize',update,{passive:true});
+  }
+
+  /*
+    Mobile browsers normally require a user gesture before they
+    permit fullscreen/orientation locking. Try immediately, then
+    retry on the first touch/click/key interaction.
+  */
+  requestLandscape();
+  const once=()=>{
+    requestLandscape();
+    window.removeEventListener('pointerdown',once);
+    window.removeEventListener('touchstart',once);
+    window.removeEventListener('keydown',once);
+  };
+  window.addEventListener('pointerdown',once,{passive:true});
+  window.addEventListener('touchstart',once,{passive:true});
+  window.addEventListener('keydown',once,{passive:true});
+
+  document.addEventListener('fullscreenchange',fitCanvas);
+})();
 
 /* Init */
 load();
