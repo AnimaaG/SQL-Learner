@@ -72,95 +72,36 @@ table{border-collapse:collapse;width:100%;font:11px Consolas,monospace}th{positi
 .badge{font-size:9px;padding:3px 6px;border-radius:3px;border:1px solid var(--border);color:var(--muted)}.badge.blue{color:#79c0ff;border-color:#315a87;background:#0f2236}.badge.green{color:#7ee787;border-color:#245c2d;background:#122519}.badge.yellow{color:#f2cc60;border-color:#5b4a1a;background:#211a08}
 @media(max-width:900px){.sidebar{width:205px}.schema-panel{display:none}.exam-levels{grid-template-columns:1fr 1fr}.info-grid{grid-template-columns:1fr}}
 
-/* =========================================================
-   SQLQUEST MOBILE & TABLET FULL-SCREEN FIX
-   ========================================================= */
 
-html, body {
-  width: 100%;
-  height: 100%;
-  margin: 0;
-  padding: 0;
-  overflow: hidden !important;
-  overscroll-behavior: none;
-  -webkit-text-size-adjust: 100%;
-  background: var(--bg);
+/* SQLQuest — dynamic device viewport */
+html,body{
+  width:100%;
+  height:100%;
+  min-width:0;
+  min-height:0;
+  margin:0;
+  padding:0;
+  overflow:hidden;
+  overscroll-behavior:none;
+  -webkit-text-size-adjust:100%;
+  background:var(--bg);
 }
-
-.app {
-  width: 100vw;
-  height: 100vh;
-  min-width: 0;
-  min-height: 0;
-  position: fixed;
-  inset: 0;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
+body{width:100dvw;height:100dvh}
+.app{
+  width:100%;
+  height:100%;
+  min-width:0;
+  min-height:0;
+  position:fixed;
+  inset:0;
+  overflow:hidden;
 }
-
-/* Tablet & Mobile Layout Scaling */
-@media (max-width: 100%) {
-  .workspace {
-    flex: 1;
-    min-width: 0;
-    display: flex;
-  }
-  .main {
-    flex: 1;
-    min-width: 0;
-  }
-  .sidebar {
-    width: 210px;
-    min-width: 210px;
-  }
-  .schema-panel {
-    width: 240px;
-    min-width: 240px;
-    display: flex;
-  }
+.workspace{width:100%;min-width:0;min-height:0}
+.main{min-width:0}
+@media(pointer:coarse){
+  html,body{touch-action:manipulation}
+  button,input,textarea,select{touch-action:manipulation}
 }
-
-/* Compact layout for smaller smartphone screens */
-@media (max-width: 100%) {
-  .topbar {
-    height: 44px;
-    padding: 0 8px;
-    gap: 6px;
-  }
-  .logo { width: 26px; height: 26px; font-size: 10px; }
-  .brand { font-size: 11px; }
-  .brand small { display: none; }
-  .menu button, .topbtn { font-size: 10px; padding: 4px 6px; }
-  .sidebar { width: 160px; min-width: 160px; }
-  .schema-panel { display: none !important; }
-  .navitem { font-size: 11px; padding: 6px 8px; }
-  .editorbar { height: 34px; }
-  .tab { height: 34px; font-size: 10px; padding: 0 8px; }
-  .editor-actions button, .runbtn { font-size: 9px; padding: 4px 6px; }
-  .context { padding: 6px 10px; }
-  .context h1 { font-size: 12px; }
-  .context p { font-size: 10px; }
-  .lineNums { width: 32px; font-size: 10px; }
-  textarea#sql { font-size: 11px; padding: 10px; }
-  .bottom { height: 210px; }
-  .bottomtabs { height: 30px; }
-  .btab { font-size: 10px; padding: 0 8px; }
-}
-
-/* Touch device scroll enhancements */
-@media (pointer: coarse) {
-  button, .navitem, .tree-item, .topic-group-head, .topic-child, .ws-tab, .ws-new, .btab {
-    min-height: 30px;
-  }
-  textarea#sql, .all-editor textarea, .exam-input,
-  .tablewrap, .results, .sidebar-content, .schema-body, .topic-scroll, .exam-page {
-    -webkit-overflow-scrolling: touch;
-  }
-}
-
-/* Hide rotation warnings/overlays */
-.mobile-rotate-note { display: none !important; }
 
 </style>
 </head>
@@ -2435,79 +2376,84 @@ function resetProgress(){clearAllLocalData();}
   }
 })();
 
-/* =========================================================
-   MOBILE / TABLET FULLSCREEN + LANDSCAPE ENGINE
-   ========================================================= */
-(function initMobileViewport(){
-  const small = () => window.matchMedia('(max-width:1100px)').matches;
+</script>
 
-  function fitViewport(){
-    const app = document.querySelector('.app');
-    if(!app || !small()) return;
-    app.style.setProperty('height','100vh');
-    app.style.setProperty('width','100vw');
+
+<script>
+(function(){
+  'use strict';
+
+  const isMobileOrTablet = () =>
+    matchMedia('(pointer:coarse)').matches ||
+    matchMedia('(max-width:1100px)').matches;
+
+  const isStandalone = () =>
+    matchMedia('(display-mode:standalone)').matches ||
+    navigator.standalone === true;
+
+  function syncViewport(){
+    const v = visualViewport;
+    const w = v ? v.width : innerWidth;
+    const h = v ? v.height : innerHeight;
+    document.documentElement.style.setProperty('--sqlquest-vw', w + 'px');
+    document.documentElement.style.setProperty('--sqlquest-vh', h + 'px');
   }
 
-  async function enterFullscreenLandscape(){
-    if(!small()) return;
-
-    /* file:// cannot use the normal PWA/security APIs reliably. */
-    const isWeb = location.protocol === 'http:' || location.protocol === 'https:';
-    if(!isWeb){
-      fitViewport();
-      return;
+  async function requestFullscreen(){
+    if(document.fullscreenElement) return true;
+    const request = document.documentElement.requestFullscreen;
+    if(!request) return false;
+    try{
+      await request.call(document.documentElement,{navigationUI:'hide'});
+      return !!document.fullscreenElement;
+    }catch(e){
+      return false;
     }
-
-    try{
-      if(!document.fullscreenElement && document.documentElement.requestFullscreen){
-        await document.documentElement.requestFullscreen({navigationUI:'hide'});
-      }
-    }catch(e){}
-
-    try{
-      if(screen.orientation && screen.orientation.lock){
-        await screen.orientation.lock('landscape');
-      }
-    }catch(e){}
-
-    fitViewport();
   }
 
-  fitViewport();
-  window.addEventListener('resize',()=>requestAnimationFrame(fitViewport),{passive:true});
-  window.addEventListener('orientationchange',()=>setTimeout(fitViewport,120),{passive:true});
-  document.addEventListener('fullscreenchange',()=>requestAnimationFrame(fitViewport),{passive:true});
-
-  /* Browsers normally require a user gesture for fullscreen. */
-  let tried = false;
-  const gesture = () => {
-    if(tried) return;
-    tried = true;
-    enterFullscreenLandscape();
-    window.removeEventListener('pointerdown',gesture);
-    window.removeEventListener('touchstart',gesture);
-    window.removeEventListener('click',gesture);
-  };
-  window.addEventListener('pointerdown',gesture,{passive:true});
-  window.addEventListener('touchstart',gesture,{passive:true});
-  window.addEventListener('click',gesture,{passive:true});
-})();
-
-/* PWA APIs are only enabled on HTTP(S), not file://. */
-(function initPWA(){
-  const isWeb = location.protocol === 'http:' || location.protocol === 'https:';
-  if(!isWeb) return;
-
-  const manifest = document.createElement('link');
-  manifest.rel = 'manifest';
-  manifest.href = './manifest.webmanifest';
-  document.head.appendChild(manifest);
-
-  if('serviceWorker' in navigator){
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('./sw.js', {scope:'./'}).catch(() => {});
-    });
+  async function requestLandscape(){
+    if(!screen.orientation || !screen.orientation.lock) return false;
+    try{
+      await screen.orientation.lock('landscape');
+      return true;
+    }catch(e){
+      return false;
+    }
   }
+
+  async function enterImmersiveMode(){
+    if(!isMobileOrTablet()) return;
+    await requestFullscreen();
+    await requestLandscape();
+    syncViewport();
+  }
+
+  syncViewport();
+  addEventListener('resize',syncViewport,{passive:true});
+  addEventListener('orientationchange',syncViewport,{passive:true});
+  document.addEventListener('fullscreenchange',syncViewport,{passive:true});
+  if(visualViewport){
+    visualViewport.addEventListener('resize',syncViewport,{passive:true});
+  }
+
+  /* Installed PWA/fullscreen contexts may permit automatic orientation locking. */
+  if(isStandalone()) enterImmersiveMode();
+
+  /* Normal mobile browsers require a user activation for fullscreen/orientation lock. */
+  let activated=false;
+  async function activate(){
+    if(activated) return;
+    activated=true;
+    await enterImmersiveMode();
+    removeEventListener('pointerup',activate);
+    removeEventListener('touchend',activate);
+    removeEventListener('click',activate);
+  }
+  addEventListener('pointerup',activate,{passive:true});
+  addEventListener('touchend',activate,{passive:true});
+  addEventListener('click',activate,{passive:true});
+
+  window.SQLQuestImmersiveMode=enterImmersiveMode;
 })();
 </script>
 
