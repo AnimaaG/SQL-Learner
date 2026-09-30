@@ -73,28 +73,63 @@ table{border-collapse:collapse;width:100%;font:11px Consolas,monospace}th{positi
 @media(max-width:900px){.sidebar{width:205px}.schema-panel{display:none}.exam-levels{grid-template-columns:1fr 1fr}.info-grid{grid-template-columns:1fr}}
 
 
-/* SQLQuest — dynamic device viewport */
-html,body{
-  width:100%;
-  height:100%;
-  min-width:0;
-  min-height:0;
-  margin:0;
-  padding:0;
-  overflow:hidden;
-  overscroll-behavior:none;
-  -webkit-text-size-adjust:100%;
-  background:var(--bg);
+/* SQLQuest — Fullscreen & Mobile Viewport Fix */
+html, body {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  position: fixed;
+  inset: 0;
+  background: var(--bg);
+  -webkit-text-size-adjust: 100%;
+  overscroll-behavior: none;
 }
-body{width:100dvw;height:100dvh}
-.app{
-  width:100%;
-  height:100%;
-  min-width:0;
-  min-height:0;
-  position:fixed;
-  inset:0;
-  overflow:hidden;
+
+/* Force use of dynamic viewport units to account for mobile browser bars */
+body {
+  width: 100vw;
+  width: 100dvw;
+  height: 100vh;
+  height: 100dvh;
+}
+
+.app {
+  width: 100vw;
+  width: 100dvw;
+  height: 100vh;
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  overflow: hidden;
+}
+
+.workspace {
+  flex: 1;
+  display: flex;
+  min-height: 0;
+  width: 100%;
+  overflow: hidden;
+}
+
+.main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+  overflow: hidden;
+}
+
+@media(pointer: coarse){
+  html, body { touch-action: manipulation; }
+  button, input, textarea, select { touch-action: manipulation; }
 }
 .workspace{width:100%;min-width:0;min-height:0}
 .main{min-width:0}
