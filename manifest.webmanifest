@@ -1,7 +1,7 @@
 {
   "name": "SQLQuest — SQL Developer Learning Studio",
   "short_name": "SQLQuest",
-  "start_url": "./",
+  "start_url": "./index.html",
   "scope": "./",
   "display": "fullscreen",
   "orientation": "landscape",
