@@ -8,6 +8,8 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="screen-orientation" content="landscape">
 <meta name="orientation" content="landscape">
+<meta name="theme-color" content="#0d1117">
+<link rel="manifest" href="./manifest.webmanifest">
 <title>SQLQuest — SQL Developer Learning Studio</title>
 <style>
 :root{
@@ -71,124 +73,48 @@ table{border-collapse:collapse;width:100%;font:11px Consolas,monospace}th{positi
 @media(max-width:900px){.sidebar{width:205px}.schema-panel{display:none}.exam-levels{grid-template-columns:1fr 1fr}.info-grid{grid-template-columns:1fr}}
 
 /* =========================================================
-   MOBILE / TABLET — FULL-SCREEN SQL DEVELOPER CANVAS
-   The application keeps one fixed desktop-style canvas and
-   scales it to the device viewport. This prevents page-level
-   horizontal/vertical scrolling and keeps the complete IDE
-   visible. Landscape is requested automatically when the
-   browser permits orientation locking.
+   MOBILE / TABLET — LANDSCAPE-FIRST SQL DEVELOPER CANVAS
    ========================================================= */
-
 html,body{
-  width:100%;
-  height:100%;
-  margin:0;
+  width:100%;height:100%;margin:0;
   overflow:hidden !important;
   overscroll-behavior:none;
   -webkit-text-size-adjust:100%;
 }
-
 @media (max-width:1100px){
   .app{
-    --canvas-w:1280px;
-    --canvas-h:720px;
-    width:var(--canvas-w);
-    min-width:var(--canvas-w);
-    height:var(--canvas-h);
-    min-height:var(--canvas-h);
-    transform-origin:top left;
-    will-change:transform;
+    --canvas-w:1280px;--canvas-h:720px;
+    width:var(--canvas-w);min-width:var(--canvas-w);
+    height:var(--canvas-h);min-height:var(--canvas-h);
+    transform-origin:top left;will-change:transform;
+    position:absolute;left:0;top:0;
   }
-
-  /* Keep the complete SQL Developer layout visible on smaller screens. */
   .workspace{width:1280px;min-width:1280px}
   .sidebar{width:260px;min-width:260px}
   .main{min-width:0;width:auto}
   .schema-panel{width:300px;min-width:300px;display:flex}
-
-  .topbar{
-    height:52px;
-    padding:0 10px;
-    gap:8px;
-  }
-  .logo{width:30px;height:30px}
-  .brand{white-space:nowrap}
-  .menu{margin-left:4px}
+  .topbar{height:52px;padding:0 10px;gap:8px}
+  .brand{white-space:nowrap}.menu{margin-left:4px}
   .menu button,.topbtn{padding:7px 8px;white-space:nowrap}
-  .conn{white-space:nowrap}
-
-  .editorbar{height:38px}
-  .context{padding:9px 12px}
-  .editor{min-height:180px}
-  .bottom{height:285px}
-  .topic-scroll{padding:16px 18px}
-  .exam-page{padding:16px}
+  .conn{white-space:nowrap}.editorbar{height:38px}
+  .context{padding:9px 12px}.editor{min-height:180px}.bottom{height:285px}
+  .topic-scroll{padding:16px 18px}.exam-page{padding:16px}
   .modal{width:900px;max-width:none}
-
-  /* Keep all three main IDE regions present, like desktop. */
   .info-grid{grid-template-columns:1fr 1fr}
   .exam-levels{grid-template-columns:repeat(4,1fr)}
   .keyword-grid{grid-template-columns:repeat(3,1fr)}
 }
-
-/* Tablet/phone viewport becomes a scaled presentation surface. */
-@media (max-width:1100px){
-  body{
-    display:block;
-    position:relative;
-  }
-
-  .app{
-    position:absolute;
-    left:0;
-    top:0;
-  }
-}
-
-/* Touch devices: preserve touch usability without changing the canvas size. */
 @media (pointer:coarse) and (max-width:1100px){
-  button,.navitem,.tree-item,.topic-group-head,.topic-child,.ws-tab,.ws-new,.btab{
-    min-height:32px;
-  }
-
-  textarea#sql,.all-editor textarea,.exam-input{
-    -webkit-overflow-scrolling:touch;
-  }
-
-  .tablewrap,.results,.sidebar-content,.schema-body,.topic-scroll,.exam-page{
-    -webkit-overflow-scrolling:touch;
-  }
+  button,.navitem,.tree-item,.topic-group-head,.topic-child,.ws-tab,.ws-new,.btab{min-height:32px}
+  textarea#sql,.all-editor textarea,.exam-input{-webkit-overflow-scrolling:touch}
+  .tablewrap,.results,.sidebar-content,.schema-body,.topic-scroll,.exam-page{-webkit-overflow-scrolling:touch}
 }
-
-/* Portrait fallback: no page scrolling. The script will request
-   landscape orientation where the browser/OS allows it. */
+/* Portrait fallback: visually keep the complete IDE landscape.
+   The browser/OS may still keep its physical orientation portrait. */
 @media (max-width:600px) and (orientation:portrait){
-  .mobile-rotate-note{display:flex}
+  .mobile-rotate-note{display:none!important}
 }
-
-.mobile-rotate-note{
-  display:none;
-  position:fixed;
-  left:50%;
-  bottom:14px;
-  transform:translateX(-50%);
-  z-index:9999;
-  align-items:center;
-  gap:8px;
-  padding:9px 12px;
-  border:1px solid #315a87;
-  border-radius:6px;
-  background:#101b28;
-  color:#c9d1d9;
-  font-size:10px;
-  box-shadow:0 8px 25px rgba(0,0,0,.4);
-  pointer-events:none;
-  white-space:nowrap;
-}
-.mobile-rotate-note b{color:#79c0ff}
-@media (orientation:landscape){
-  .mobile-rotate-note{display:none !important}
-}
+.mobile-rotate-note{display:none!important}
 </style>
 </head>
 <body>
@@ -2436,78 +2362,57 @@ function resetProgress(){clearAllLocalData();}
 
 /* =========================================================
    MOBILE / TABLET VIEWPORT ENGINE
-   Keep the complete desktop-style IDE visible without page
-   scrolling. On supported browsers, request fullscreen +
-   landscape after a user gesture. Orientation locking cannot
-   be forced by ordinary web pages on every mobile browser,
-   so the fallback is a fitted, non-scrolling canvas.
+   Best-effort real orientation lock + visual landscape fallback.
    ========================================================= */
 (function initMobileViewport(){
   const isSmallDevice=()=>window.matchMedia('(max-width:1100px)').matches;
+  const isPortrait=()=>window.matchMedia('(orientation:portrait)').matches;
   const app=document.querySelector('.app');
-  const CANVAS_W=1280;
-  const CANVAS_H=720;
+  const CANVAS_W=1280,CANVAS_H=720;
 
   function fitCanvas(){
-    if(!app) return;
-    if(!isSmallDevice()){
-      app.style.transform='';
-      app.style.left='';
-      app.style.top='';
-      return;
+    if(!app||!isSmallDevice())return;
+    const vw=Math.max(1,window.innerWidth),vh=Math.max(1,window.innerHeight);
+    if(isPortrait()&&vw<vh){
+      const scale=Math.min(vh/CANVAS_W,vw/CANVAS_H);
+      const rotatedW=CANVAS_H*scale,rotatedH=CANVAS_W*scale;
+      app.style.transformOrigin='top left';
+      app.style.transform=`translateY(${vh}px) rotate(-90deg) scale(${scale})`;
+      app.style.left=`${Math.max(0,(vw-rotatedW)/2)}px`;
+      app.style.top=`${Math.max(0,(vh-rotatedH)/2)}px`;
+    }else{
+      const scale=Math.min(vw/CANVAS_W,vh/CANVAS_H);
+      app.style.transformOrigin='top left';
+      app.style.transform=`scale(${Math.max(.1,scale)})`;
+      app.style.left='0px';app.style.top='0px';
     }
-
-    const vw=Math.max(1,window.innerWidth);
-    const vh=Math.max(1,window.innerHeight);
-
-    /*
-      Landscape: scale the 1280x720 IDE to the entire viewport.
-      Portrait: use the same fit-to-screen fallback so there is
-      never an outer scrollbar. If orientation locking succeeds,
-      the browser will switch to landscape and this recalculates.
-    */
-    const scale=Math.min(vw/CANVAS_W,vh/CANVAS_H);
-    app.style.transform=`scale(${Math.max(.1,scale)})`;
-    app.style.left='0px';
-    app.style.top='0px';
   }
 
   async function requestLandscape(){
-    if(!isSmallDevice()) return;
+    if(!isSmallDevice())return;
     try{
-      if(document.documentElement.requestFullscreen && !document.fullscreenElement){
+      if(!document.fullscreenElement&&document.documentElement.requestFullscreen)
         await document.documentElement.requestFullscreen({navigationUI:'hide'});
-      }
     }catch(e){}
-
     try{
-      if(screen.orientation && screen.orientation.lock){
+      if(screen.orientation&&screen.orientation.lock)
         await screen.orientation.lock('landscape');
-      }
     }catch(e){}
-
     fitCanvas();
   }
 
-  function update(){
-    requestAnimationFrame(fitCanvas);
-  }
-
+  const update=()=>requestAnimationFrame(fitCanvas);
   fitCanvas();
   window.addEventListener('resize',update,{passive:true});
   window.addEventListener('orientationchange',()=>setTimeout(fitCanvas,100),{passive:true});
-  if(window.visualViewport){
-    window.visualViewport.addEventListener('resize',update,{passive:true});
-  }
+  if(window.visualViewport)window.visualViewport.addEventListener('resize',update,{passive:true});
+  document.addEventListener('fullscreenchange',update);
 
-  /*
-    Mobile browsers normally require a user gesture before they
-    permit fullscreen/orientation locking. Try immediately, then
-    retry on the first touch/click/key interaction.
-  */
   requestLandscape();
+  let retried=false;
   const once=()=>{
-    requestLandscape();
+    if(retried)return;
+    retried=true;requestLandscape();
     window.removeEventListener('pointerdown',once);
     window.removeEventListener('touchstart',once);
     window.removeEventListener('keydown',once);
@@ -2515,9 +2420,12 @@ function resetProgress(){clearAllLocalData();}
   window.addEventListener('pointerdown',once,{passive:true});
   window.addEventListener('touchstart',once,{passive:true});
   window.addEventListener('keydown',once,{passive:true});
-
-  document.addEventListener('fullscreenchange',fitCanvas);
 })();
+
+/* Register PWA shell so installed SQLQuest launches in landscape/fullscreen. */
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
+}
 
 /* Init */
 load();
