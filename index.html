@@ -73,212 +73,94 @@ table{border-collapse:collapse;width:100%;font:11px Consolas,monospace}th{positi
 @media(max-width:900px){.sidebar{width:205px}.schema-panel{display:none}.exam-levels{grid-template-columns:1fr 1fr}.info-grid{grid-template-columns:1fr}}
 
 /* =========================================================
-   MOBILE / TABLET — FULL-SCREEN SQL DEVELOPER CANVAS
-   The application keeps one fixed desktop-style canvas and
-   scales it to the device viewport. This prevents page-level
-   horizontal/vertical scrolling and keeps the complete IDE
-   visible. Landscape is requested automatically when the
-   browser permits orientation locking.
+   SQLQUEST MOBILE & TABLET FULL-SCREEN FIX
    ========================================================= */
 
-html,body{
-  width:100%;
-  height:100%;
-  margin:0;
-  overflow:hidden !important;
-  overscroll-behavior:none;
-  -webkit-text-size-adjust:100%;
+html, body {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden !important;
+  overscroll-behavior: none;
+  -webkit-text-size-adjust: 100%;
+  background: var(--bg);
 }
 
-@media (max-width:100%){
-  .app{
-    --canvas-w:100%;
-    --canvas-h:100%;
-    width:var(--canvas-w);
-    min-width:var(--canvas-w);
-    height:var(--canvas-h);
-    min-height:var(--canvas-h);
-    transform-origin:top left;
-    will-change:transform;
-  }
-
-  /* Keep the complete SQL Developer layout visible on smaller screens. */
-  .workspace{width:1280px;min-width:1280px}
-  .sidebar{width:260px;min-width:260px}
-  .main{min-width:0;width:auto}
-  .schema-panel{width:300px;min-width:300px;display:flex}
-
-  .topbar{
-    height:52px;
-    padding:0 10px;
-    gap:8px;
-  }
-  .logo{width:30px;height:30px}
-  .brand{white-space:nowrap}
-  .menu{margin-left:4px}
-  .menu button,.topbtn{padding:7px 8px;white-space:nowrap}
-  .conn{white-space:nowrap}
-
-  .editorbar{height:38px}
-  .context{padding:9px 12px}
-  .editor{min-height:180px}
-  .bottom{height:285px}
-  .topic-scroll{padding:16px 18px}
-  .exam-page{padding:16px}
-  .modal{width:900px;max-width:none}
-
-  /* Keep all three main IDE regions present, like desktop. */
-  .info-grid{grid-template-columns:1fr 1fr}
-  .exam-levels{grid-template-columns:repeat(4,1fr)}
-  .keyword-grid{grid-template-columns:repeat(3,1fr)}
+.app {
+  width: 100vw;
+  height: 100vh;
+  min-width: 0;
+  min-height: 0;
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
-/* Tablet/phone viewport becomes a scaled presentation surface. */
-@media (max-width:1100px){
-  body{
-    display:block;
-    position:relative;
+/* Tablet & Mobile Layout Scaling */
+@media (max-width: 1100px) {
+  .workspace {
+    flex: 1;
+    min-width: 0;
+    display: flex;
   }
-
-  .app{
-    position:absolute;
-    left:0;
-    top:0;
+  .main {
+    flex: 1;
+    min-width: 0;
+  }
+  .sidebar {
+    width: 210px;
+    min-width: 210px;
+  }
+  .schema-panel {
+    width: 240px;
+    min-width: 240px;
+    display: flex;
   }
 }
 
-/* Touch devices: preserve touch usability without changing the canvas size. */
-@media (pointer:coarse) and (max-width:1100px){
-  button,.navitem,.tree-item,.topic-group-head,.topic-child,.ws-tab,.ws-new,.btab{
-    min-height:32px;
+/* Compact layout for smaller smartphone screens */
+@media (max-width: 768px) {
+  .topbar {
+    height: 44px;
+    padding: 0 8px;
+    gap: 6px;
   }
-
-  textarea#sql,.all-editor textarea,.exam-input{
-    -webkit-overflow-scrolling:touch;
-  }
-
-  .tablewrap,.results,.sidebar-content,.schema-body,.topic-scroll,.exam-page{
-    -webkit-overflow-scrolling:touch;
-  }
-}
-
-/* Portrait fallback: no page scrolling. The script will request
-   landscape orientation where the browser/OS allows it. */
-@media (max-width:600px) and (orientation:portrait){
-  .mobile-rotate-note{display:flex}
-}
-
-.mobile-rotate-note{
-  display:none;
-  position:fixed;
-  left:50%;
-  bottom:14px;
-  transform:translateX(-50%);
-  z-index:9999;
-  align-items:center;
-  gap:8px;
-  padding:9px 12px;
-  border:1px solid #315a87;
-  border-radius:6px;
-  background:#101b28;
-  color:#c9d1d9;
-  font-size:10px;
-  box-shadow:0 8px 25px rgba(0,0,0,.4);
-  pointer-events:none;
-  white-space:nowrap;
-}
-.mobile-rotate-note b{color:#79c0ff}
-@media (orientation:landscape){
-  .mobile-rotate-note{display:none !important}
+  .logo { width: 26px; height: 26px; font-size: 10px; }
+  .brand { font-size: 11px; }
+  .brand small { display: none; }
+  .menu button, .topbtn { font-size: 10px; padding: 4px 6px; }
+  .sidebar { width: 160px; min-width: 160px; }
+  .schema-panel { display: none !important; }
+  .navitem { font-size: 11px; padding: 6px 8px; }
+  .editorbar { height: 34px; }
+  .tab { height: 34px; font-size: 10px; padding: 0 8px; }
+  .editor-actions button, .runbtn { font-size: 9px; padding: 4px 6px; }
+  .context { padding: 6px 10px; }
+  .context h1 { font-size: 12px; }
+  .context p { font-size: 10px; }
+  .lineNums { width: 32px; font-size: 10px; }
+  textarea#sql { font-size: 11px; padding: 10px; }
+  .bottom { height: 210px; }
+  .bottomtabs { height: 30px; }
+  .btab { font-size: 10px; padding: 0 8px; }
 }
 
-/* =========================================================
-   SQLQUEST MOBILE FINAL — TRUE VIEWPORT-FIT LANDSCAPE
-   No page scrolling, no rotate notification, no shrunken
-   portrait canvas. The desktop IDE is presented edge-to-edge.
-   ========================================================= */
-html,body{
-  width:100%;
-  height:100%;
-  margin:0;
-  overflow:hidden !important;
-  overscroll-behavior:none;
-  -webkit-text-size-adjust:100%;
-  background:#0d1117;
-}
-.app{
-  width:100vw;
-  height:100vh;
-  min-width:0;
-  min-height:0;
-  transform:none !important;
-  position:fixed;
-  inset:0;
-}
-@media (max-width:1100px){
-  .app{
-    width:100vw;
-    height:100vh;
-    min-width:0;
-    min-height:0;
+/* Touch device scroll enhancements */
+@media (pointer: coarse) {
+  button, .navitem, .tree-item, .topic-group-head, .topic-child, .ws-tab, .ws-new, .btab {
+    min-height: 30px;
   }
-  .workspace{width:auto;min-width:0;flex:1;}
-  .main{min-width:0;flex:1;}
-  .sidebar{width:220px;min-width:220px;}
-  .schema-panel{width:250px;min-width:250px;display:flex;}
-}
-@media (max-width:700px){
-  .topbar{height:44px;padding:0 7px;gap:6px;}
-  .logo{width:27px;height:27px;font-size:10px;}
-  .brand{font-size:12px;}
-  .brand small{font-size:8px;}
-  .menu{margin-left:2px;gap:0;}
-  .menu button,.topbtn{font-size:10px;padding:5px 6px;}
-  .conn{font-size:9px;}
-  .sidebar{width:185px;min-width:185px;}
-  .schema-panel{width:220px;min-width:220px;}
-  .navitem{font-size:11px;padding:7px 8px;}
-  .tree-item{font-size:10px;padding:6px 7px;}
-  .sidebar-footer{font-size:8px;padding:6px;}
-  .editorbar{height:32px;}
-  .tab{height:32px;font-size:10px;padding:0 8px;}
-  .editor-actions button,.runbtn{font-size:9px;padding:4px 6px;}
-  .context{padding:7px 9px;}
-  .context h1{font-size:12px;}
-  .context p{font-size:9px;}
-  .lineNums{width:30px;font-size:10px;padding-right:5px;}
-  textarea#sql{font-size:10px;padding:8px;}
-  .bottom{height:220px;}
-  .bottomtabs{height:28px;}
-  .btab{font-size:9px;padding:0 7px;}
-  .results{padding:6px;}
-  table{font-size:9px;}
-  th,td{padding:5px 6px;}
-}
-@media (orientation:portrait) and (max-width:1100px){
-  /*
-    Browsers that refuse orientation locking still get a real
-    landscape presentation. The entire app is rotated into the
-    available viewport instead of being rendered as a tiny strip.
-  */
-  .app{
-    width:100vh;
-    height:100vw;
-    min-width:0;
-    min-height:0;
-    transform-origin:top left !important;
-    transform:rotate(90deg) translateY(-100%) !important;
+  textarea#sql, .all-editor textarea, .exam-input,
+  .tablewrap, .results, .sidebar-content, .schema-body, .topic-scroll, .exam-page {
+    -webkit-overflow-scrolling: touch;
   }
 }
-@media (orientation:landscape) and (max-width:1100px){
-  .app{
-    width:100vw;
-    height:100vh;
-    transform:none !important;
-  }
-}
-/* Never show any mobile instruction/notification overlay. */
-.mobile-rotate-note{display:none !important;}
+
+/* Hide rotation warnings/overlays */
+.mobile-rotate-note { display: none !important; }
 
 </style>
 </head>
@@ -2525,34 +2407,60 @@ function resetProgress(){clearAllLocalData();}
 
 
 
+/* =========================
+   APPLICATION BOOTSTRAP
+   =========================
+   The previous file defined showPage()/renderAll() but never called
+   them on initial load. Therefore #main stayed empty until the user
+   clicked a navigator item. Initialize the saved state and render the
+   default page immediately after the DOM is ready.
+   */
+(function bootSQLQuest(){
+  function boot(){
+    try { load(); } catch(e) { console.warn('SQLQuest load failed', e); }
+    try { ensureTopicState(); } catch(e) { console.warn('SQLQuest topic init failed', e); }
+    try { showPage(state.page || 'all'); } catch(e) {
+      console.error('SQLQuest initial render failed', e);
+      const main = document.getElementById('main');
+      if(main){
+        main.innerHTML = '<div style="padding:20px;color:#f85149;font:12px Consolas,monospace">SQLQuest failed to initialize. Open DevTools Console for details.</div>';
+      }
+    }
+  }
+
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', boot, {once:true});
+  }else{
+    boot();
+  }
+})();
+
 /* =========================================================
    MOBILE / TABLET FULLSCREEN + LANDSCAPE ENGINE
-   - Uses the device viewport directly.
-   - Requests fullscreen on load and again on first gesture.
-   - Requests landscape after fullscreen.
-   - CSS portrait fallback rotates the IDE into landscape.
-   - No user-facing notification is displayed.
    ========================================================= */
 (function initMobileViewport(){
   const small = () => window.matchMedia('(max-width:1100px)').matches;
 
   function fitViewport(){
-    const app=document.querySelector('.app');
+    const app = document.querySelector('.app');
     if(!app || !small()) return;
     app.style.setProperty('height','100vh');
     app.style.setProperty('width','100vw');
   }
 
   async function enterFullscreenLandscape(){
-    if(!small()) return false;
+    if(!small()) return;
 
-    let fs=false;
+    /* file:// cannot use the normal PWA/security APIs reliably. */
+    const isWeb = location.protocol === 'http:' || location.protocol === 'https:';
+    if(!isWeb){
+      fitViewport();
+      return;
+    }
+
     try{
-      if(document.fullscreenElement){
-        fs=true;
-      }else if(document.documentElement.requestFullscreen){
+      if(!document.fullscreenElement && document.documentElement.requestFullscreen){
         await document.documentElement.requestFullscreen({navigationUI:'hide'});
-        fs=!!document.fullscreenElement;
       }
     }catch(e){}
 
@@ -2563,26 +2471,18 @@ function resetProgress(){clearAllLocalData();}
     }catch(e){}
 
     fitViewport();
-    return fs;
-  }
-
-  function refresh(){
-    requestAnimationFrame(fitViewport);
   }
 
   fitViewport();
-  window.addEventListener('resize',refresh,{passive:true});
+  window.addEventListener('resize',()=>requestAnimationFrame(fitViewport),{passive:true});
   window.addEventListener('orientationchange',()=>setTimeout(fitViewport,120),{passive:true});
-  document.addEventListener('fullscreenchange',refresh,{passive:true});
+  document.addEventListener('fullscreenchange',()=>requestAnimationFrame(fitViewport),{passive:true});
 
-  /* Automatic attempt; browsers may reject it without a gesture. */
-  enterFullscreenLandscape();
-
-  /* First real interaction unlocks fullscreen on mobile browsers. */
-  let tried=false;
-  const gesture=()=>{
+  /* Browsers normally require a user gesture for fullscreen. */
+  let tried = false;
+  const gesture = () => {
     if(tried) return;
-    tried=true;
+    tried = true;
     enterFullscreenLandscape();
     window.removeEventListener('pointerdown',gesture);
     window.removeEventListener('touchstart',gesture);
@@ -2592,14 +2492,24 @@ function resetProgress(){clearAllLocalData();}
   window.addEventListener('touchstart',gesture,{passive:true});
   window.addEventListener('click',gesture,{passive:true});
 })();
-</script>
 
-/* SQLQuest PWA shell */
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js').catch(() => {});
-  });
-}
+/* PWA APIs are only enabled on HTTP(S), not file://. */
+(function initPWA(){
+  const isWeb = location.protocol === 'http:' || location.protocol === 'https:';
+  if(!isWeb) return;
+
+  const manifest = document.createElement('link');
+  manifest.rel = 'manifest';
+  manifest.href = './manifest.webmanifest';
+  document.head.appendChild(manifest);
+
+  if('serviceWorker' in navigator){
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js', {scope:'./'}).catch(() => {});
+    });
+  }
+})();
+</script>
 
 </body>
 </html>
