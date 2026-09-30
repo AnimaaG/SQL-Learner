@@ -102,7 +102,32 @@ body{width:100dvw;height:100dvh}
   html,body{touch-action:manipulation}
   button,input,textarea,select{touch-action:manipulation}
 }
-
+/* Add this near the bottom of your existing <style> block */
+@media (max-width: 1100px) and (orientation: portrait) {
+  .portrait-warning {
+    position: fixed;
+    inset: 0;
+    background: var(--bg);
+    color: var(--text);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 24px;
+    z-index: 99999;
+  }
+  .portrait-warning button {
+    margin-top: 16px;
+    background: var(--blue2);
+    color: white;
+    border: none;
+    padding: 10px 18px;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+}
 </style>
 </head>
 <body>
@@ -128,6 +153,7 @@ body{width:100dvw;height:100dvh}
     </div></div>
   </div>
   <div class="top-spacer"></div>
+  <button class="topbtn" onclick="forceLandscapeFullscreen()">⛶ Fullscreen</button>
   <div class="conn"><span class="dot"></span> Learning Database</div>
   <button class="topbtn danger" onclick="clearAllLocalData()">Clear All Data</button>
 </header>
@@ -2378,7 +2404,6 @@ function resetProgress(){clearAllLocalData();}
 
 </script>
 
-
 <script>
 (function(){
   'use strict';
@@ -2386,10 +2411,6 @@ function resetProgress(){clearAllLocalData();}
   const isMobileOrTablet = () =>
     matchMedia('(pointer:coarse)').matches ||
     matchMedia('(max-width:1100px)').matches;
-
-  const isStandalone = () =>
-    matchMedia('(display-mode:standalone)').matches ||
-    navigator.standalone === true;
 
   function syncViewport(){
     const v = visualViewport;
@@ -2399,61 +2420,64 @@ function resetProgress(){clearAllLocalData();}
     document.documentElement.style.setProperty('--sqlquest-vh', h + 'px');
   }
 
-  async function requestFullscreen(){
-    if(document.fullscreenElement) return true;
-    const request = document.documentElement.requestFullscreen;
-    if(!request) return false;
-    try{
-      await request.call(document.documentElement,{navigationUI:'hide'});
-      return !!document.fullscreenElement;
-    }catch(e){
-      return false;
+  // 👉 Global function triggered by the Fullscreen button or warning prompt
+  window.forceLandscapeFullscreen = async function() {
+    try {
+      if (!document.fullscreenElement && document.documentElement.requestFullscreen) {
+        await document.documentElement.requestFullscreen({ navigationUI: 'hide' });
+      }
+      if (screen.orientation && screen.orientation.lock) {
+        await screen.orientation.lock('landscape');
+      }
+      removePortraitWarning();
+    } catch(e) {
+      console.warn("Fullscreen or orientation lock blocked/unsupported:", e);
+      alert("Please rotate your mobile device horizontally.");
     }
-  }
-
-  async function requestLandscape(){
-    if(!screen.orientation || !screen.orientation.lock) return false;
-    try{
-      await screen.orientation.lock('landscape');
-      return true;
-    }catch(e){
-      return false;
-    }
-  }
-
-  async function enterImmersiveMode(){
-    if(!isMobileOrTablet()) return;
-    await requestFullscreen();
-    await requestLandscape();
     syncViewport();
+  };
+
+  function showPortraitWarning() {
+    if (!isMobileOrTablet()) return;
+    if (document.getElementById('portraitWarningOverlay')) return;
+
+    const overlay = document.createElement('div');
+    overlay.id = 'portraitWarningOverlay';
+    overlay.className = 'portrait-warning';
+    overlay.innerHTML = `
+      <div style="font-size: 32px; margin-bottom: 12px;">📱 ⟳</div>
+      <h2>Please Rotate Your Device</h2>
+      <p style="color: var(--muted); max-width: 300px; margin-top: 8px;">
+        SQLQuest is designed for a full-screen landscape studio experience.
+      </p>
+      <button onclick="forceLandscapeFullscreen()">Enter Fullscreen Landscape</button>
+    `;
+    document.body.appendChild(overlay);
+  }
+
+  function removePortraitWarning() {
+    const overlay = document.getElementById('portraitWarningOverlay');
+    if (overlay) overlay.remove();
+  }
+
+  function checkOrientation() {
+    if (matchMedia('(orientation: portrait)').matches && isMobileOrTablet()) {
+      showPortraitWarning();
+    } else {
+      removePortraitWarning();
+    }
   }
 
   syncViewport();
-  addEventListener('resize',syncViewport,{passive:true});
-  addEventListener('orientationchange',syncViewport,{passive:true});
-  document.addEventListener('fullscreenchange',syncViewport,{passive:true});
+  checkOrientation();
+
+  addEventListener('resize', () => { syncViewport(); checkOrientation(); }, {passive:true});
+  addEventListener('orientationchange', () => { syncViewport(); checkOrientation(); }, {passive:true});
+  document.addEventListener('fullscreenchange', checkOrientation, {passive:true});
+
   if(visualViewport){
-    visualViewport.addEventListener('resize',syncViewport,{passive:true});
+    visualViewport.addEventListener('resize', syncViewport, {passive:true});
   }
-
-  /* Installed PWA/fullscreen contexts may permit automatic orientation locking. */
-  if(isStandalone()) enterImmersiveMode();
-
-  /* Normal mobile browsers require a user activation for fullscreen/orientation lock. */
-  let activated=false;
-  async function activate(){
-    if(activated) return;
-    activated=true;
-    await enterImmersiveMode();
-    removeEventListener('pointerup',activate);
-    removeEventListener('touchend',activate);
-    removeEventListener('click',activate);
-  }
-  addEventListener('pointerup',activate,{passive:true});
-  addEventListener('touchend',activate,{passive:true});
-  addEventListener('click',activate,{passive:true});
-
-  window.SQLQuestImmersiveMode=enterImmersiveMode;
 })();
 </script>
 
