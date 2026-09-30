@@ -1,4 +1,4 @@
-const CACHE = "sqlquest-v3";
+const CACHE = "sqlquest-v4";
 
 const ASSETS = [
   "./",

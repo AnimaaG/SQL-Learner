@@ -72,33 +72,27 @@ table{border-collapse:collapse;width:100%;font:11px Consolas,monospace}th{positi
 .badge{font-size:9px;padding:3px 6px;border-radius:3px;border:1px solid var(--border);color:var(--muted)}.badge.blue{color:#79c0ff;border-color:#315a87;background:#0f2236}.badge.green{color:#7ee787;border-color:#245c2d;background:#122519}.badge.yellow{color:#f2cc60;border-color:#5b4a1a;background:#211a08}
 @media(max-width:900px){.sidebar{width:205px}.schema-panel{display:none}.exam-levels{grid-template-columns:1fr 1fr}.info-grid{grid-template-columns:1fr}}
 
-
-/* SQLQuest — Fullscreen & Mobile Viewport Fix */
+/* SQLQuest — Absolute Edge-to-Edge Mobile Fullscreen Fix */
 html, body {
-  width: 100%;
-  height: 100%;
+  width: 100vw;
+  height: 100vh;
+  width: 100dvw;
+  height: 100dvh;
   margin: 0;
   padding: 0;
   overflow: hidden;
   position: fixed;
-  inset: 0;
+  top: 0;
+  left: 0;
   background: var(--bg);
   -webkit-text-size-adjust: 100%;
   overscroll-behavior: none;
 }
 
-/* Force use of dynamic viewport units to account for mobile browser bars */
-body {
-  width: 100vw;
-  width: 100dvw;
-  height: 100vh;
-  height: 100dvh;
-}
-
 .app {
   width: 100vw;
-  width: 100dvw;
   height: 100vh;
+  width: 100dvw;
   height: 100dvh;
   display: flex;
   flex-direction: column;
@@ -131,8 +125,10 @@ body {
   html, body { touch-action: manipulation; }
   button, input, textarea, select { touch-action: manipulation; }
 }
+
 .workspace{width:100%;min-width:0;min-height:0}
 .main{min-width:0}
+
 @media(pointer:coarse){
   html,body{touch-action:manipulation}
   button,input,textarea,select{touch-action:manipulation}
