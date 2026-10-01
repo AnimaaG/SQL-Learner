@@ -541,6 +541,7 @@ table{border-collapse:collapse;width:100%;font:11px Consolas,monospace}th{positi
   <button type="button" data-extra=")">)</button>
   <button type="button" data-extra="/">/</button>
   <button type="button" data-extra="-">-</button>
+  <button type="button" data-extra=";">;</button>
 </div>
 <div id="teacherOverlay" class="overlay hidden">
  <div class="modal">
@@ -1990,6 +1991,8 @@ function executeCrossDialectKeyword(sql,kw){
  if(/^ALTER\s+TABLE\b[\s\S]*\bALTER\s+COLUMN\b/i.test(clean)) return {columns:['STATUS'],rows:[{STATUS:'ALTER COLUMN accepted (datatype change simulated)'}]};
  if(/^ALTER\s+TABLE\b[\s\S]*\bMODIFY\b/i.test(clean)) return {columns:['STATUS'],rows:[{STATUS:'ALTER TABLE MODIFY accepted (datatype change simulated)'}]};
  if(/^DROP\s+CONSTRAINT\b/i.test(clean)||/^DROP\s+DEFAULT\b/i.test(clean)) return {columns:['STATUS'],rows:[{STATUS:`${kw} accepted (constraint/default metadata simulated)`}]};
+ if(/^(PURGE|FLASHBACK|ANALYZE|AUDIT|NOAUDIT|LOCK|SET|CALL|EXPLAIN)\b/i.test(clean))
+   return simulatedStatus(`${kw} statement accepted (Oracle command semantics simulated in the browser engine)`);
  if(/^EXEC(?:UTE)?\s+/i.test(clean)){
    const call=clean.replace(/^EXEC(?:UTE)?\s+/i,'').replace(/;$/,'');
    return executePlsql(`BEGIN ${call}; END;`);
@@ -2039,6 +2042,26 @@ function execute(sql){
  if(kw==='DECLARE'||kw==='BEGIN')return executePlsql(clean);
  throw Error(`ORA-00900: invalid SQL statement '${kw}'. This learning simulator does not execute that command yet.`);
 }
+
+function inferOracleType(v){
+ if(v===null||v===undefined)return 'VARCHAR2';
+ if(typeof v==='number')return 'NUMBER';
+ if(v instanceof Date)return 'DATE';
+ if(typeof v==='boolean')return 'NUMBER(1)';
+ return 'VARCHAR2';
+}
+function resultColumnTypes(result){
+ const types={};
+ (result.columns||[]).forEach(c=>{
+   const sample=(result.rows||[]).find(r=>r[c]!==null&&r[c]!==undefined);
+   types[c]=sample?inferOracleType(sample[c]):'VARCHAR2';
+ });
+ return types;
+}
+function simulatedStatus(status){
+ return {columns:['STATUS'],rows:[{STATUS:status}]};
+}
+
 function ddlOrControl(sql,kw){
  if(kw==='RENAME'){const m=sql.match(/^RENAME\s+([A-Za-z_]\w*)\s+TO\s+([A-Za-z_]\w*)$/i);if(!m)throw Error('RENAME object TO new_name syntax expected.');const old=m[1],neu=m[2];if(DB[old]){DB[neu]=DB[old];delete DB[old];schema[neu]=schema[old];delete schema[old];if(DBObjects.tables[old]){DBObjects.tables[neu]={...DBObjects.tables[old],name:neu};delete DBObjects.tables[old];}}return {columns:['STATUS'],rows:[{STATUS:`RENAME ${old} TO ${neu} successful (simulated)`}]};}
  if(kw==='COMMENT')return {columns:['STATUS'],rows:[{STATUS:'COMMENT accepted (metadata simulated)'}]};
@@ -2048,15 +2071,66 @@ function ddlOrControl(sql,kw){
  if(kw==='GRANT'||kw==='REVOKE')return {columns:['STATUS'],rows:[{STATUS:`${kw} syntax accepted (permission metadata simulated)`}]};
  if(kw==='TRUNCATE'){const m=sql.match(/^TRUNCATE\s+TABLE\s+([\w$#]+)/i);if(!m)throw Error('TRUNCATE TABLE syntax expected.');if(!DB[m[1]])throw Error(`ORA-00942: table '${m[1]}' does not exist.`);DB[m[1]]=[];return {columns:['STATUS'],rows:[{STATUS:'TRUNCATE successful'}]};}
  if(kw==='DROP'){
-  const m=sql.match(/^DROP\s+(TABLE|VIEW|INDEX|SEQUENCE|SYNONYM|PROCEDURE|FUNCTION|TRIGGER|PACKAGE)\s+([\w$#]+)/i);if(!m)throw Error('ORA-00900: supported DROP syntax: TABLE, VIEW, INDEX, SEQUENCE, SYNONYM, PROCEDURE, FUNCTION, TRIGGER.');
-  const type=m[1].toLowerCase()+'s',name=m[2];if(type==='tables'){if(!DB[name])throw Error(`ORA-00942: table '${name}' does not exist.`);delete DB[name];delete schema[name];delete DBObjects.tables[name];}else if(DBObjects[type]&&DBObjects[type][name])delete DBObjects[type][name];else throw Error(`ORA-04043: object '${name}' does not exist.`);save();return {columns:['STATUS'],rows:[{STATUS:`DROP ${m[1]} successful`}]};
+  const m=sql.match(/^DROP\s+(MATERIALIZED\s+VIEW|TABLE|VIEW|INDEX|SEQUENCE|SYNONYM|PROCEDURE|FUNCTION|TRIGGER|PACKAGE(?:\s+BODY)?|TYPE|ROLE|USER|DIRECTORY)\s+([\w$#]+)/i);if(!m)throw Error('ORA-00900: DROP object syntax requires an object name.');
+  const rawType=m[1].toUpperCase(),name=m[2];
+if(rawType==='TABLE'){delete DB[name];delete schema[name];delete DBObjects.tables[name];}
+else if(rawType==='USER')delete DBObjects.users[name];
+else if(rawType==='ROLE')delete DBObjects.roles[name];
+else {
+ const type=rawType.toLowerCase().replace(/\s+body$/,'').replace(/\s+/g,'_')+'s';
+ if(DBObjects[type])delete DBObjects[type][name];
+}
+save();return simulatedStatus(`DROP ${m[1]} ${name} accepted (object metadata updated/simulated)`);
  }
  if(kw==='ALTER'){
   let m=sql.match(/^ALTER\s+TABLE\s+([\w$#]+)\s+ADD\s+(?:\((.+)\)|(.+))$/i);if(m){const t=m[1],defs=m[2]||m[3];if(!DB[t])throw Error(`ORA-00942: table '${t}' does not exist.`);const add=columnDefMap(defs);Object.entries(add).forEach(([c,ty])=>{schema[t][c]=ty;DB[t].forEach(r=>r[c]=null);DBObjects.tables[t].columns=schema[t];});save();return {columns:['STATUS'],rows:[{STATUS:`ALTER TABLE ${t} ADD successful`}]};}
   m=sql.match(/^ALTER\s+TABLE\s+([\w$#]+)\s+DROP\s+COLUMN\s+([\w$#]+)/i);if(m){const t=m[1],c=m[2];if(!DB[t]||!schema[t]?.[c])throw Error(`ORA-00904: invalid identifier '${c}'.`);delete schema[t][c];DB[t].forEach(r=>delete r[c]);DBObjects.tables[t].columns=schema[t];save();return {columns:['STATUS'],rows:[{STATUS:`ALTER TABLE ${t} DROP COLUMN successful`}]};}
-  throw Error('ORA-00900: supported ALTER TABLE syntax: ADD or DROP COLUMN.');
+  if(/^ALTER\s+(SESSION|SYSTEM|DATABASE|TABLE|INDEX|VIEW|SEQUENCE|MATERIALIZED\s+VIEW|TRIGGER|PROCEDURE|FUNCTION|PACKAGE|USER|ROLE)\b/i.test(sql))
+    return simulatedStatus('ALTER statement accepted (advanced Oracle metadata/physical behavior simulated).');
+  throw Error('ORA-00900: unsupported ALTER syntax.');
  }
  if(kw==='CREATE'){
+  /* Oracle CTAS: CREATE TABLE name AS SELECT ... */
+  let ctas=sql.match(/^CREATE\s+(?:GLOBAL\s+TEMPORARY\s+|PRIVATE\s+TEMPORARY\s+)?TABLE\s+([\w$#]+)\s*(?:\(([^)]*)\))?\s+AS\s+([\s\S]+)$/i);
+  if(ctas){
+    const name=ctas[1], selectSql=ctas[3].replace(/;$/,'').trim();
+    const temporary=/^CREATE\s+(?:GLOBAL\s+TEMPORARY|PRIVATE\s+TEMPORARY)/i.test(sql);
+    const result=executeSelect(selectSql);
+    let cols=resultColumnTypes(result);
+    let aliases=ctas[2]?splitComma(ctas[2]).map(x=>x.trim()):null;
+    if(aliases && aliases.length===result.columns.length){
+      const renamed={};
+      aliases.forEach((a,i)=>renamed[a.replace(/^["']|["']$/g,'')]=cols[result.columns[i]]||'VARCHAR2');
+      cols=renamed;
+    }
+    if(DB[name])throw Error(`ORA-00955: name '${name}' is already used by an existing object.`);
+    DB[name]=result.rows.map(r=>{
+      const o={};
+      result.columns.forEach((c,i)=>{
+        const target=aliases&&aliases[i]?aliases[i].replace(/^["']|["']$/g,''):c;
+        o[target]=r[c];
+      });
+      return o;
+    });
+    schema[name]=cols;
+    registerObject('tables',name,{columns:cols,system:false,temporary});
+    save();
+    return {columns:['STATUS','ROWS_AFFECTED'],rows:[{STATUS:`CREATE ${temporary?'TEMPORARY ':''}TABLE ${name} AS SELECT successful`,ROWS_AFFECTED:result.rows.length}]};
+  }
+
+  /* Advanced Oracle table variants: retain the object and simulate storage-specific semantics. */
+  let special=sql.match(/^CREATE\s+(?:BLOCKCHAIN\s+|IMMUTABLE\s+|SHARDED\s+|JSON\s+COLLECTION\s+|EXTERNAL\s+)?TABLE\s+([\w$#]+)/i);
+  if(special && !/\bAS\s+SELECT\b/i.test(sql)){
+    const name=special[1];
+    if(!DB[name]){
+      DB[name]=[];
+      schema[name]={};
+      registerObject('tables',name,{columns:{},system:false,modernSyntax:true});
+      save();
+    }
+    return simulatedStatus(`CREATE TABLE ${name} accepted (advanced Oracle table syntax simulated)`);
+  }
+
   let m=sql.match(/^CREATE\s+(?:GLOBAL\s+TEMPORARY\s+)?TABLE\s+([\w$#]+)\s*\(([^]+)\)(?:\s+ON\s+COMMIT\s+(DELETE|PRESERVE)\s+ROWS)?$/i);if(m){const name=m[1],cols=columnDefMap(m[2]);if(DB[name])throw Error(`ORA-00955: name '${name}' is already used by an existing object.`);DB[name]=[];schema[name]=cols;registerObject('tables',name,{columns:cols,system:false});save();return {columns:['STATUS'],rows:[{STATUS:`CREATE TABLE ${name} successful`}]};}
   m=sql.match(/^CREATE\s+MATERIALIZED\s+VIEW\s+([\w$#]+)\s+AS\s+([\s\S]+)$/i);if(m){registerObject('views',m[1],{sql:m[2].replace(/;$/,''),materialized:true});save();return {columns:['STATUS'],rows:[{STATUS:`CREATE MATERIALIZED VIEW ${m[1]} successful (refresh is simulated)`}]};}
   m=sql.match(/^CREATE\s+(?:OR\s+REPLACE\s+)?VIEW\s+([\w$#]+)\s+AS\s+([\s\S]+)$/i);if(m){const name=m[1];registerObject('views',name,{sql:m[2].replace(/;$/,'')});save();return {columns:['STATUS'],rows:[{STATUS:`CREATE VIEW ${name} successful`}]};}
@@ -2066,7 +2140,9 @@ function ddlOrControl(sql,kw){
   m=sql.match(/^CREATE\s+(?:OR\s+REPLACE\s+)?PROCEDURE\s+([\w$#]+)([\s\S]*)$/i);if(m){registerObject('procedures',m[1],{source:sql});save();return {columns:['STATUS'],rows:[{STATUS:`CREATE PROCEDURE ${m[1]} successful`}]};}
   m=sql.match(/^CREATE\s+(?:OR\s+REPLACE\s+)?FUNCTION\s+([\w$#]+)([\s\S]*)$/i);if(m){registerObject('functions',m[1],{source:sql});save();return {columns:['STATUS'],rows:[{STATUS:`CREATE FUNCTION ${m[1]} successful`}]};}
   m=sql.match(/^CREATE\s+(?:OR\s+REPLACE\s+)?TRIGGER\s+([\w$#]+)([\s\S]*)$/i);if(m){registerObject('triggers',m[1],{source:sql});save();return {columns:['STATUS'],rows:[{STATUS:`CREATE TRIGGER ${m[1]} successful`}]};}
-  throw Error('ORA-00900: unsupported CREATE syntax in this learning simulator. Supported: TABLE, VIEW, INDEX, SEQUENCE, SYNONYM, PROCEDURE, FUNCTION, TRIGGER.');
+  if(/^CREATE\s+(SCHEMA|ROLE|USER|DATABASE|DIRECTORY|DATABASE\s+LINK|DBLINK|TYPE|PACKAGE|JAVA|LIBRARY|CLUSTER|DIMENSION|CONTEXT|PROFILE|MATERIALIZED\s+VIEW|AUDIT\s+POLICY|FLASHBACK\s+ARCHIVE)\b/i.test(sql))
+    return simulatedStatus('CREATE statement accepted (advanced Oracle object metadata simulated).');
+  throw Error('ORA-00900: unsupported CREATE syntax in this learning simulator.');
  }
  if(kw==='MERGE')return {columns:['STATUS'],rows:[{STATUS:'MERGE syntax accepted; execution is simulated by the learning engine.'}]};
 }
