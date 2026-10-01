@@ -503,7 +503,11 @@ table{border-collapse:collapse;width:100%;font:11px Consolas,monospace}th{positi
     </div></div>
     <div class="menu-wrap"><button onclick="toggleMenu('helpMenu')">Help</button><div id="helpMenu" class="menu-drop hidden">
       <button onclick="showShortcuts();closeMenus()">Keyboard Shortcuts</button><button onclick="googleSearch();closeMenus()">Google Search</button><button onclick="showAbout();closeMenus()">About SQLQuest</button>
-    </div></div>
+       <button onclick="window.location.href='SQL_policy.html';closeMenus()">
+      Privacy Policy
+    </button>
+    </div>
+  </div>
   </div>
   <div class="top-spacer"></div>
   <div class="conn"><span class="dot"></span> Learning Database</div>
@@ -1433,7 +1437,7 @@ function renderAll(){
   ${baseEditor(name,'All Data is the unrestricted learning workspace. You can inspect the full mock schema and try supported SQL statements freely.')}
   ${renderWorksheetTabs()}
   <div class="all-banner">Connection: <b>SQLQUEST_LEARNING</b> · Mode: <b>All Data</b> · Oracle-style syntax simulator · Active worksheet: <b>${esc(name)}</b> · <b>${topics.length} curriculum concepts executable/simulated</b> · <b>${examPool.reduce((n,e)=>n+e.questions.length,0)} exam questions</b></div>
-  <div class="all-editor"><textarea id="sql" spellcheck="false" inputmode="none" virtualkeyboardpolicy="manual" placeholder="Write SQL here...">${esc(value)}</textarea></div>
+  <div class="all-editor"><textarea id="sql" spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Write SQL here...">${esc(value)}</textarea></div>
   ${bottomPanel()}
  </div>`;
  renderBottom();
